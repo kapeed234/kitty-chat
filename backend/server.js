@@ -22,22 +22,25 @@ const app = express();
 
 const server = http.createServer(app);
 
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://kitty-chat-one.vercel.app"
+];
+
 const io = new Server(server, {
     cors: {
-       origin: [
-    "http://localhost:5173",
-    "http://localhost:5174"
-],
-        methods: ["GET", "POST"]
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
 app.use(
     cors({
-        origin: [
-    "http://localhost:5173",
-    "http://localhost:5174"
-]
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        credentials: true
     })
 );
 
@@ -297,23 +300,6 @@ socket.on(
     }
 );
 
-socket.on(
-    "message_delivered",
-    (data) => {
-        setMessages((oldMessages) =>
-            oldMessages.map((item) =>
-                item._id === data.messageId
-                    ? {
-                          ...item,
-                          delivered: true,
-                          deliveredAt:
-                              data.deliveredAt
-                      }
-                    : item
-            )
-        );
-    }
-);
 
 socket.on(
     "message_seen",
