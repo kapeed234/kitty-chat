@@ -3,6 +3,14 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import "./App.css";
 
+const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000";
+
+const SOCKET_URL =
+    import.meta.env.VITE_SOCKET_URL ||
+    "http://localhost:5000";
+
 function App() {
     const [user, setUser] = useState(() => {
         try {
@@ -50,7 +58,7 @@ const typingTimeoutRef = useRef(null);
             return;
         }
 
-        const socket = io("http://localhost:5000", {
+       const socket = io(SOCKET_URL, {
             auth: {
                 token: token
             }
@@ -230,7 +238,7 @@ socket.on("user_stop_typing", () => {
 
         try {
             const response = await axios.post(
-                "http://localhost:5000/api/auth/login",
+               `${API_URL}/api/auth/login`,
                 {
                     email,
                     password
@@ -328,7 +336,7 @@ const handleSendMessage = async (event) => {
                 localStorage.getItem("token");
 
             const response = await axios.post(
-                "http://localhost:5000/api/uploads/image",
+                `${API_URL}/api/uploads/image`,
                 formData,
                 {
                     headers: {
@@ -392,7 +400,7 @@ const handleDeleteMessage = async (messageId) => {
             localStorage.getItem("token");
 
         await axios.delete(
-            `http://localhost:5000/api/messages/${messageId}`,
+            `${API_URL}/api/messages/${messageId}`,
             {
                 headers: {
                     Authorization:
@@ -650,7 +658,7 @@ const handleDeleteMessage = async (messageId) => {
         src={
     item.imageUrl.startsWith("http")
         ? item.imageUrl
-        : `http://localhost:5000${item.imageUrl}`
+        :  `${API_URL}${item.imageUrl}`
 }
         alt="Shared"
         style={{
