@@ -429,7 +429,12 @@ socket.on(
 });
 
 const PORT = process.env.PORT || 5000;
-
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        status: "healthy",
+        service: "Kitty Chat Backend"
+    });
+});
 server.listen(PORT, () => {
 
     console.log(
