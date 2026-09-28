@@ -15,6 +15,8 @@ const messageRoutes = require("./routes/messageRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const User = require("./models/User");
 const Message = require("./models/Message");
+// Track how many active Socket.IO connections each user has
+const onlineUsers = new Map();
 
 
 
@@ -176,13 +178,50 @@ io.on("connection", async (socket) => {
         USER JOINED
     */
 
+   const userId = socket.user._id.toString();
+
+const currentConnections =
+    onlineUsers.get(userId) || 0;
+
+onlineUsers.set(
+    userId,
+    currentConnections + 1
+);
+
+// Tell the other person that this user is online
+if (currentConnections === 0) {
     socket.to(ROOM).emit(
         "user_online",
         {
             userId: socket.user._id,
-            name: socket.user.name
+            name: socket.user.name,
+            email: socket.user.email
         }
     );
+}
+
+// Tell the newly connected user who is already online
+for (const [connectedUserId, connectionCount] of onlineUsers) {
+    if (
+        connectedUserId !== userId &&
+        connectionCount > 0
+    ) {
+        const connectedUser =
+            await User.findById(connectedUserId)
+                .select("name email");
+
+        if (connectedUser) {
+            socket.emit(
+                "user_online",
+                {
+                    userId: connectedUser._id,
+                    name: connectedUser.name,
+                    email: connectedUser.email
+                }
+            );
+        }
+    }
+}
 
     /*
         SEND MESSAGE
@@ -395,23 +434,49 @@ socket.on(
         DISCONNECT
     */
 
-    socket.on(
-        "disconnect",
-        () => {
+   socket.on(
+    "disconnect",
+    () => {
+
+        const userId =
+            socket.user._id.toString();
+
+        const currentConnections =
+            onlineUsers.get(userId) || 0;
+
+        const remainingConnections =
+            Math.max(
+                currentConnections - 1,
+                0
+            );
+
+        if (remainingConnections === 0) {
+            onlineUsers.delete(userId);
 
             console.log(
-                `User disconnected: ${socket.user.name}`
+                `User offline: ${socket.user.name}`
             );
 
             socket.to(ROOM).emit(
                 "user_offline",
                 {
                     userId: socket.user._id,
-                    name: socket.user.name
+                    name: socket.user.name,
+                    email: socket.user.email
                 }
             );
+        } else {
+            onlineUsers.set(
+                userId,
+                remainingConnections
+            );
+
+            console.log(
+                `User still connected: ${socket.user.name}`
+            );
         }
-    );
+    }
+);
 });
 
 const PORT = process.env.PORT || 5000;
