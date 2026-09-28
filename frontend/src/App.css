@@ -540,3 +540,332 @@ body {
         font-size: 14px;
     }
 }
+
+/* ============================= */
+/* MESSAGE STATUS */
+/* ============================= */
+
+.message-status {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.message-status.sent {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.message-status.delivered {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-status.seen {
+    color: #9ee7ff;
+    font-weight: 700;
+}
+
+/* ============================= */
+/* PARTNER STATUS */
+/* ============================= */
+
+.online-status.online {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.online-status.offline {
+    color: #888;
+}
+
+/* ============================= */
+/* MODERN CHAT BUBBLES */
+/* ============================= */
+
+.message-wrapper {
+    display: flex;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.message-bubble {
+    position: relative;
+    max-width: min(70%, 520px);
+    padding: 10px 13px;
+    border-radius: 18px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease;
+}
+
+.message-bubble:hover {
+    transform: translateY(-1px);
+}
+
+.message-bubble p {
+    margin: 0;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.message-bubble strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.message-bubble > span:last-child {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 10px;
+    opacity: 0.65;
+}
+
+
+/* =========================================
+   KITTY CHAT — PHASE 2 UI UPGRADE
+   Append this file's contents to App.css
+   ========================================= */
+
+/* Modern chat bubbles */
+.message-bubble {
+    position: relative;
+    max-width: min(70%, 520px);
+    padding: 10px 13px;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.message-bubble:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+}
+
+.message-bubble.mine {
+    background: #667eea;
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.message-bubble.theirs {
+    background: #e5e7eb;
+    color: #222;
+    border-bottom-left-radius: 5px;
+}
+
+.message-bubble p {
+    margin: 0;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+/* Message image */
+.message-image {
+    display: block;
+    max-width: 250px;
+    max-height: 300px;
+    margin-top: 0;
+    border-radius: 12px;
+    object-fit: cover;
+    cursor: zoom-in;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.message-bubble p + .message-image {
+    margin-top: 8px;
+}
+
+.message-image:hover {
+    transform: scale(1.015);
+    opacity: 0.94;
+}
+
+/* Message metadata */
+.message-time {
+    display: inline-block;
+    margin-left: 7px;
+    font-size: 10px;
+    opacity: 0.65;
+    vertical-align: baseline;
+}
+
+/* Delete button */
+.delete-message-button {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 6px;
+    padding: 3px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 11px;
+    opacity: 0.55;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.delete-message-button:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Delivery / seen */
+.message-status {
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.message-status.sent {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.message-status.delivered {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.message-status.seen {
+    color: #9ee7ff;
+    font-weight: 700;
+}
+
+/* Online / offline */
+.online-status.online {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.online-status.offline {
+    color: #888;
+}
+
+/* Typing indicator */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    margin: 0 0 5px 4px;
+    padding: 7px 11px;
+    border-radius: 14px;
+    background: #e5e7eb;
+    color: #777;
+    font-size: 12px;
+}
+
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #888;
+    animation: kittyTypingBounce 1.2s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.typing-indicator label {
+    margin-left: 4px;
+}
+
+@keyframes kittyTypingBounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+/* Full-screen image viewer */
+.image-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.88);
+    cursor: pointer;
+    animation: kittyViewerIn 0.15s ease-out;
+}
+
+.image-viewer img {
+    max-width: 95vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+    cursor: default;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-viewer-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.image-viewer-close:hover {
+    background: rgba(255, 255, 255, 0.28);
+}
+
+@keyframes kittyViewerIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .message-bubble {
+        max-width: 88%;
+    }
+
+    .message-image {
+        max-width: 220px;
+        max-height: 280px;
+    }
+
+    .image-viewer {
+        padding: 15px;
+    }
+
+    .image-viewer img {
+        max-width: 100%;
+        max-height: 85vh;
+        border-radius: 8px;
+    }
+
+    .image-viewer-close {
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 26px;
+    }
+
+    .delete-message-button {
+        font-size: 10px;
+    }
+}

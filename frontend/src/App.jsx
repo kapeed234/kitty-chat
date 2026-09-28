@@ -28,6 +28,7 @@ function App() {
 
     const [message, setMessage] = useState("");
     const [selectedImage, setSelectedImage] = useState(null);
+    const [viewingImage, setViewingImage] = useState("");
     const [imagePreview, setImagePreview] = useState("");
     const [uploadingImage, setUploadingImage] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -42,6 +43,7 @@ const [partnerTyping, setPartnerTyping] =
 const typingTimeoutRef = useRef(null);
 
     const socketRef = useRef(null);
+    const messagesEndRef = useRef(null);
 
     // =====================================
     // CONNECT TO SOCKET.IO
@@ -66,25 +68,73 @@ const typingTimeoutRef = useRef(null);
 
         socketRef.current = socket;
 
-        socket.on("connect", () => {
-            console.log("Socket connected:", socket.id);
-            setConnectionStatus("Online");
-        });
+       socket.on("connect", () => {
+    console.log("Socket connected:", socket.id);
 
-        socket.on("connect_error", (error) => {
-            console.error(
-                "Socket connection error:",
-                error.message
-            );
+    setConnectionStatus("Online");
+});
 
-            setConnectionStatus("Connection failed");
-        });
+socket.on("disconnect", (reason) => {
+    console.log("Socket disconnected:", reason);
+
+    setConnectionStatus("Offline");
+    setPartnerStatus("Offline");
+});
+
+socket.on("connect_error", (error) => {
+    console.error(
+        "Socket connection error:",
+        error.message
+    );
+
+    setConnectionStatus("Reconnecting...");
+});
+
+socket.io.on("reconnect_attempt", (attempt) => {
+    console.log(
+        "Trying to reconnect...",
+        attempt
+    );
+
+    setConnectionStatus("Reconnecting...");
+});
+
+socket.io.on("reconnect", (attempt) => {
+    console.log(
+        "Reconnected after attempts:",
+        attempt
+    );
+
+    setConnectionStatus("Online");
+});
 
         // Previous messages from MongoDB
-        socket.on("message_history", (history) => {
-            console.log("Message history:", history);
-            setMessages(history);
-        });
+       socket.on("message_history", (history) => {
+    console.log("Message history:", history);
+
+    setMessages(history);
+
+    // The chat is open, so partner messages loaded
+    // from history can be marked as delivered and seen.
+    history.forEach((item) => {
+        const senderId =
+            item.sender?._id ||
+            item.sender;
+
+        if (
+            senderId?.toString() !==
+            user.id?.toString()
+        ) {
+            socket.emit("message_delivered", {
+                messageId: item._id
+            });
+
+            socket.emit("message_seen", {
+                messageId: item._id
+            });
+        }
+    });
+});
 
         // New real-time message
        
@@ -227,6 +277,17 @@ socket.on("user_stop_typing", () => {
     }, [user]);
 
     // =====================================
+// AUTO SCROLL
+// =====================================
+
+useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end"
+    });
+}, [messages, partnerTyping]);
+
+    // =====================================
     // LOGIN
     // =====================================
 
@@ -300,6 +361,15 @@ setImagePreview(previewUrl);
 const handleRemoveImage = () => {
     setSelectedImage(null);
     setImagePreview("");
+};
+
+const DISPLAY_NAMES = {
+    "person1@kitty.com": "Kitty",
+    "person2@kitty.com": "Bunny"
+};
+
+const getDisplayName = (email, fallback = "User") => {
+    return DISPLAY_NAMES[email?.toLowerCase()] || fallback;
 };
 const handleSendMessage = async (event) => {
     event.preventDefault();
@@ -452,8 +522,13 @@ const handleDeleteMessage = async (messageId) => {
 
         setUser(null);
         setMessages([]);
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+
         setEmail("");
         setPassword("");
+        setPartnerStatus("Offline");
+        setPartnerTyping(false);
     };
 
     // =====================================
@@ -552,29 +627,39 @@ const handleDeleteMessage = async (messageId) => {
 
             <header className="chat-header">
 
-                <div className="chat-user">
+              <div className="chat-user">
 
-                    <div className="avatar">
-                        {user.name
-                            ? user.name
-                                .charAt(0)
-                                .toUpperCase()
-                            : "U"}
-                    </div>
+    <div className="avatar">
+        {getDisplayName(
+            user.email,
+            user.name || "User"
+        )
+            .charAt(0)
+            .toUpperCase()}
+    </div>
 
-                    <div>
+    <div>
+        <h2>
+            {getDisplayName(
+                user.email,
+                user.name || "User"
+            )}
+        </h2>
 
-                        <h2>
-                            Kitty Chat
-                        </h2>
+        <span
+            className={
+                partnerStatus === "Online"
+                    ? "online-status online"
+                    : "online-status offline"
+            }
+        >
+            {partnerStatus === "Online"
+                ? "🟢 Online"
+                : "⚫ Offline"}
+        </span>
+    </div>
 
-                        <span className="online-status">
-                            🟢 {connectionStatus}
-                        </span>
-
-                    </div>
-
-                </div>
+</div>
 
                 <button
                     className="logout-button"
@@ -629,23 +714,19 @@ const handleDeleteMessage = async (messageId) => {
                             >
 
                                 <div
-                                    className="message-bubble"
-                                    style={{
-                                        background: isMine
-                                            ? "#667eea"
-                                            : "#e5e7eb",
-                                        color: isMine
-                                            ? "white"
-                                            : "#222"
-                                    }}
+                                    className={`message-bubble ${
+                                        isMine ? "mine" : "theirs"
+                                    }`}
                                 >
 
                                     {!isMine && (
-                                        <strong>
-                                            {item.sender?.name ||
-                                                "Person 2"}
-                                        </strong>
-                                    )}
+    <strong>
+        {getDisplayName(
+            item.sender?.email,
+            item.sender?.name || "User"
+        )}
+    </strong>
+)}
 
                                    {item.text && (
     <p>
@@ -661,6 +742,13 @@ const handleDeleteMessage = async (messageId) => {
         :  `${API_URL}${item.imageUrl}`
 }
         alt="Shared"
+        onClick={() =>
+    setViewingImage(
+        item.imageUrl.startsWith("http")
+            ? item.imageUrl
+            : `${API_URL}${item.imageUrl}`
+    )
+}
         style={{
             maxWidth: "250px",
             maxHeight: "300px",
@@ -676,22 +764,11 @@ const handleDeleteMessage = async (messageId) => {
 {isMine && (
     <button
         type="button"
-        onClick={() =>
-            handleDeleteMessage(item._id)
-        }
-        style={{
-            border: "none",
-            background: "transparent",
-            color: isMine
-                ? "rgba(255,255,255,0.8)"
-                : "#777",
-            cursor: "pointer",
-            fontSize: "12px",
-            padding: "2px 0",
-            marginTop: "5px"
-        }}
+        className="delete-message-button"
+        onClick={() => handleDeleteMessage(item._id)}
+        title="Delete message"
     >
-        🗑️ Delete
+        🗑 Delete
     </button>
 )}
 
@@ -700,13 +777,19 @@ const handleDeleteMessage = async (messageId) => {
         className={
             item.seen
                 ? "message-status seen"
-                : "message-status"
+                : item.delivered
+                    ? "message-status delivered"
+                    : "message-status sent"
         }
     >
-        {item.delivered ? "✓✓" : "✓"}
+        {item.seen
+            ? "✓✓"
+            : item.delivered
+                ? "✓✓"
+                : "✓"}
     </span>
 )}
-                                    <span>
+                                    <span className="message-time">
                                         {item.createdAt
                                             ? new Date(
                                                 item.createdAt
@@ -728,7 +811,7 @@ const handleDeleteMessage = async (messageId) => {
 
                 )}
 
-                {partnerTyping && (
+               {partnerTyping && (
     <div
         style={{
             padding: "5px 10px",
@@ -741,7 +824,9 @@ const handleDeleteMessage = async (messageId) => {
     </div>
 )}
 
-            </main>
+<div ref={messagesEndRef} />
+
+</main>
 
            <form
     className="message-input-area"
@@ -894,6 +979,31 @@ const handleDeleteMessage = async (messageId) => {
     </button>
 
 </form>
+
+            {viewingImage && (
+                <div
+                    className="image-viewer"
+                    onClick={() => setViewingImage("")}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Image viewer"
+                >
+                    <button
+                        type="button"
+                        className="image-viewer-close"
+                        onClick={() => setViewingImage("")}
+                        aria-label="Close image"
+                    >
+                        ×
+                    </button>
+
+                    <img
+                        src={viewingImage}
+                        alt="Full size shared image"
+                        onClick={(event) => event.stopPropagation()}
+                    />
+                </div>
+            )}
 
         </div>
     );
